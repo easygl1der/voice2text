@@ -1,0 +1,6 @@
+.worktrees/
+worktrees/
+Voice2Text/
+*.xcodeproj
+*.xcworkspace
+.DS_Store
