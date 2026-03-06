@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var appState = AppState()
     var hotKeyManager = HotKeyManager()
     var transcriptionManager = TranscriptionServiceManager()
+    var historyStorage = HistoryStorage()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -37,6 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeyManager.setup()
 
         updateMenu()
+        loadHistory()
     }
 
     @objc func toggleMenu() {
@@ -85,6 +87,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         language: appState.selectedLanguage
                     )
                     appState.transcripts.append(transcript)
+                    saveTranscript(transcript)
 
                     // Paste to cursor
                     pasteToCursor(text: text)
@@ -127,6 +130,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func showAbout() {
         NSApp.orderFrontStandardAboutPanel(nil)
+    }
+
+    func loadHistory() {
+        appState.transcripts = historyStorage.loadAll()
+    }
+
+    func saveTranscript(_ transcript: Transcript) {
+        historyStorage.save(transcript)
     }
 
     @objc func quitApp() {
