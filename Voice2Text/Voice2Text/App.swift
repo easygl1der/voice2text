@@ -13,20 +13,34 @@ struct Voice2TextApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
+    var appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "Voice2Text")
+            button.action = #selector(toggleMenu)
+            button.target = self
         }
 
-        let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "About Voice2Text", action: #selector(showAbout), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
+        updateMenu()
+    }
 
-        statusItem?.menu = menu
+    @objc func toggleMenu() {
+        statusItem?.button?.performClick(nil)
+    }
+
+    func updateMenu() {
+        let menu = NSMenu()
+
+        // Status
+        let statusItem = NSMenuItem()
+        let statusView = MenuBarView(appState: appState, onRecord: {}, onStop: {})
+        statusItem.view = NSHostingView(rootView: statusView)
+        menu.addItem(statusItem)
+
+        self.statusItem?.menu = menu
     }
 
     @objc func showAbout() {
