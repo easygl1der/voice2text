@@ -1,4 +1,5 @@
 import SwiftUI
+import Carbon
 
 @main
 struct Voice2TextApp: App {
@@ -14,6 +15,8 @@ struct Voice2TextApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var appState = AppState()
+    var hotKeyManager = HotKeyManager()
+    var transcriptionManager = TranscriptionServiceManager()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -23,6 +26,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.action = #selector(toggleMenu)
             button.target = self
         }
+
+        // Setup hotkey
+        hotKeyManager.onHotKeyDown = { [weak self] in
+            self?.startRecording()
+        }
+        hotKeyManager.onHotKeyUp = { [weak self] in
+            self?.stopRecordingAndTranscribe()
+        }
+        hotKeyManager.setup()
 
         updateMenu()
     }
@@ -34,13 +46,83 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func updateMenu() {
         let menu = NSMenu()
 
-        // Status
         let statusItem = NSMenuItem()
-        let statusView = MenuBarView(appState: appState, onRecord: {}, onStop: {})
+        let statusView = MenuBarView(appState: appState, onRecord: { [weak self] in
+            self?.startRecording()
+        }, onStop: { [weak self] in
+            self?.stopRecordingAndTranscribe()
+        })
         statusItem.view = NSHostingView(rootView: statusView)
         menu.addItem(statusItem)
 
         self.statusItem?.menu = menu
+    }
+
+    func startRecording() {
+        guard !appState.audioRecorder.isRecording else { return }
+        appState.status = .recording
+        _ = appState.audioRecorder.startRecording()
+    }
+
+    func stopRecordingAndTranscribe() {
+        guard appState.audioRecorder.isRecording else { return }
+
+        if let audioURL = appState.audioRecorder.stopRecording() {
+            appState.status = .transcribing
+            Task {
+                do {
+                    let text = try await transcriptionManager.transcribe(
+                        audioURL: audioURL,
+                        service: appState.selectedService,
+                        language: appState.selectedLanguage,
+                        apiKey: appState.apiKey
+                    )
+
+                    // Save to history
+                    let transcript = Transcript(
+                        text: text,
+                        service: appState.selectedService.rawValue,
+                        language: appState.selectedLanguage
+                    )
+                    appState.transcripts.append(transcript)
+
+                    // Paste to cursor
+                    pasteToCursor(text: text)
+
+                    appState.status = .ready
+                } catch {
+                    appState.lastError = error.localizedDescription
+                    appState.status = .error
+                }
+            }
+        }
+    }
+
+    func pasteToCursor(text: String) {
+        let pasteboard = NSPasteboard.general
+        let previousContents = pasteboard.string(forType: .string)
+
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+
+        // Simulate Cmd+V
+        let source = CGEventSource(stateID: .hidSystemState)
+
+        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // V key
+        keyDown?.flags = .maskCommand
+        keyDown?.post(tap: .cghidEventTap)
+
+        let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
+        keyUp?.flags = .maskCommand
+        keyUp?.post(tap: .cghidEventTap)
+
+        // Restore previous clipboard after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            if let previous = previousContents {
+                pasteboard.clearContents()
+                pasteboard.setString(previous, forType: .string)
+            }
+        }
     }
 
     @objc func showAbout() {
