@@ -1,0 +1,42 @@
+name: Voice2Text
+options:
+  bundleIdPrefix: com.voice2text
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+
+packages:
+  HotKey:
+    url: https://github.com/soffes/HotKey
+    from: "0.2.0"
+  SQLite:
+    url: https://github.com/stephencelis/SQLite.swift
+    from: "0.15.0"
+
+targets:
+  Voice2Text:
+    type: application
+    platform: macOS
+    sources:
+      - Voice2Text
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voice2text.app
+        INFOPLIST_FILE: Voice2Text/Info.plist
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGNING_REQUIRED: NO
+        ENABLE_HARDENED_RUNTIME: NO
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - package: HotKey
+      - package: SQLite
+    entitlements:
+      path: Voice2Text/Voice2Text.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.device.audio-input: true
