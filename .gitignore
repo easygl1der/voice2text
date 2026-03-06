@@ -5,3 +5,6 @@ Voice2Text/
 *.xcodeproj
 *.xcworkspace
 .DS_Store
+loom_video.mp4
+loom_audio.m4a
+design.png
