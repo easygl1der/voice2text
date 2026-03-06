@@ -27,7 +27,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voice2text.app
-        INFOPLIST_FILE: Voice2Text/Info.plist
+        INFOPLIST_FILE: Voice2Text/Voice2Text/Info.plist
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGNING_REQUIRED: NO
         ENABLE_HARDENED_RUNTIME: NO
