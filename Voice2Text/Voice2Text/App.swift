@@ -14,6 +14,7 @@ struct Voice2TextApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
+    var settingsWindow: NSWindow?
     var appState = AppState()
     var hotKeyManager = HotKeyManager()
     var transcriptionManager = TranscriptionServiceManager()
@@ -53,6 +54,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.startRecording()
         }, onStop: { [weak self] in
             self?.stopRecordingAndTranscribe()
+        }, onSettings: { [weak self] in
+            self?.showSettings()
         })
         statusItem.view = NSHostingView(rootView: statusView)
         menu.addItem(statusItem)
@@ -142,5 +145,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitApp() {
         NSApp.terminate(nil)
+    }
+
+    func showSettings() {
+        if settingsWindow == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 450, height: 350),
+                styleMask: [.titled, .closable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "Voice2Text Settings"
+            window.contentView = NSHostingView(rootView: SettingsView(appState: appState))
+            window.center()
+            settingsWindow = window
+        }
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 }

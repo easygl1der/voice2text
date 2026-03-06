@@ -4,6 +4,7 @@ struct MenuBarView: View {
     @ObservedObject var appState: AppState
     let onRecord: () -> Void
     let onStop: () -> Void
+    let onSettings: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -35,6 +36,17 @@ struct MenuBarView: View {
             }
             .pickerStyle(.menu)
             .frame(width: 180)
+
+            Divider()
+
+            // Settings
+            Button(action: { onSettings() }) {
+                HStack {
+                    Image(systemName: "gear")
+                    Text("Settings")
+                }
+            }
+            .buttonStyle(.plain)
 
             Divider()
 
