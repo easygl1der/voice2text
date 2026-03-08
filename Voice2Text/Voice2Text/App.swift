@@ -32,10 +32,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Setup hotkey
         hotKeyManager.onHotKeyDown = { [weak self] in
+            print("HotKey DOWN detected!")
             self?.startRecording()
+            self?.refreshMenu()
         }
         hotKeyManager.onHotKeyUp = { [weak self] in
+            print("HotKey UP detected!")
             self?.stopRecordingAndTranscribe()
+            self?.refreshMenu()
         }
         hotKeyManager.setup()
 
@@ -67,14 +71,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusItem?.menu = menu
     }
 
+    func refreshMenu() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.setupMenu()
+        }
+    }
+
     @objc func openSettings() {
         showSettings()
     }
 
     func startRecording() {
+        print("startRecording called!")
         guard !appState.audioRecorder.isRecording else { return }
         appState.status = .recording
-        _ = appState.audioRecorder.startRecording()
+        let started = appState.audioRecorder.startRecording()
+        print("Recording started: \(started)")
     }
 
     func stopRecordingAndTranscribe() {
