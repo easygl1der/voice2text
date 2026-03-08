@@ -23,10 +23,22 @@ class HotKeyManager: ObservableObject {
             self.onHotKeyDown?()
         }
 
-        hotKey?.keyUpHandler = { [weak self] in
+        // Use flagsChanged to detect when Option key is released
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
             guard let self = self else { return }
-            self.isKeyDown = false
-            self.onHotKeyUp?()
+            if !event.modifierFlags.contains(.option) && self.isKeyDown {
+                self.isKeyDown = false
+                self.onHotKeyUp?()
+            }
+        }
+
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            guard let self = self else { return }
+            if !event.modifierFlags.contains(.option) && self.isKeyDown {
+                self.isKeyDown = false
+                self.onHotKeyUp?()
+            }
+            return event
         }
 
         isEnabled = true
