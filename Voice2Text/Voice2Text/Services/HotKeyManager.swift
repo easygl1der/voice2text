@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import HotKey
 import Carbon
 
@@ -11,27 +12,21 @@ class HotKeyManager: ObservableObject {
     private var hotKey: HotKey?
     private var globalMonitor: Any?
     private var localMonitor: Any?
+    private var isKeyDown = false
 
     func setup(key: Key = .v, modifiers: NSEvent.ModifierFlags = .option) {
         hotKey = HotKey(key: key, modifiers: modifiers)
 
         hotKey?.keyDownHandler = { [weak self] in
             guard let self = self else { return }
+            self.isKeyDown = true
             self.onHotKeyDown?()
         }
 
-        // Setup global key up monitor for Option key release
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
-            if !event.modifierFlags.contains(.option) {
-                self?.onHotKeyUp?()
-            }
-        }
-
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
-            if !event.modifierFlags.contains(.option) {
-                self?.onHotKeyUp?()
-            }
-            return event
+        hotKey?.keyUpHandler = { [weak self] in
+            guard let self = self else { return }
+            self.isKeyDown = false
+            self.onHotKeyUp?()
         }
 
         isEnabled = true
