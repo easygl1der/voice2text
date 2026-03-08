@@ -25,18 +25,19 @@ class AudioRecorder: NSObject, ObservableObject {
         let audioFilename = documentsPath.appendingPathComponent("\(UUID().uuidString).m4a")
         recordingURL = audioFilename
 
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 16000,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
+        // Create audio format
+        let format = inputNode!.outputFormat(forBus: 0)
 
         do {
-            audioFile = try AVAudioFile(forWriting: audioFilename, settings: settings)
+            // Use URL directly instead of settings dictionary
+            audioFile = try AVAudioFile(forWriting: audioFilename, settings: format.settings)
 
-            inputNode?.installTap(onBus: 0, bufferSize: 1024, format: inputNode?.outputFormat(forBus: 0)) { [weak self] buffer, _ in
-                self?.audioFile?.write(buffer)
+            inputNode?.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+                do {
+                    try self?.audioFile?.write(from: buffer)
+                } catch {
+                    print("Error writing audio: \(error)")
+                }
                 self?.updateAudioLevel(buffer: buffer)
             }
 
