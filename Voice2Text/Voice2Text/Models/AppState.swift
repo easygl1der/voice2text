@@ -23,6 +23,7 @@ class AppState: ObservableObject {
     @Published var selectedLanguage: String = "Chinese"
     @Published var apiKey: String = ""
     @Published var transcripts: [Transcript] = []
+    @Published var lastError: String = ""
     var audioRecorder = AudioRecorder()
 
     let languages = ["Chinese", "English", "Japanese", "Korean", "Spanish", "French", "German"]
