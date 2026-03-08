@@ -46,9 +46,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         // Add status at top
-        let statusItem = NSMenuItem(title: "Status: \(appState.status.rawValue)", action: nil, keyEquivalent: "")
-        statusItem.isEnabled = false
-        menu.addItem(statusItem)
+        let statusMenuItem = NSMenuItem(title: "Status: \(appState.status.rawValue)", action: nil, keyEquivalent: "")
+        statusMenuItem.isEnabled = false
+        menu.addItem(statusMenuItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -64,7 +64,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         quitItem.target = self
         menu.addItem(quitItem)
 
-        statusItem?.menu = menu
+        self.statusItem?.menu = menu
     }
 
     @objc func openSettings() {
