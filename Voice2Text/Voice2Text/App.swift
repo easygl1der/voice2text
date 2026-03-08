@@ -25,9 +25,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "Voice2Text")
-            button.action = #selector(toggleMenu)
-            button.target = self
         }
+
+        // Create menu
+        setupMenu()
 
         // Setup hotkey
         hotKeyManager.onHotKeyDown = { [weak self] in
@@ -38,29 +39,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         hotKeyManager.setup()
 
-        updateMenu()
         loadHistory()
     }
 
-    @objc func toggleMenu() {
-        statusItem?.button?.performClick(nil)
-    }
-
-    func updateMenu() {
+    func setupMenu() {
         let menu = NSMenu()
 
-        let statusItem = NSMenuItem()
-        let statusView = MenuBarView(appState: appState, onRecord: { [weak self] in
-            self?.startRecording()
-        }, onStop: { [weak self] in
-            self?.stopRecordingAndTranscribe()
-        }, onSettings: { [weak self] in
-            self?.showSettings()
-        })
-        statusItem.view = NSHostingView(rootView: statusView)
+        // Add status at top
+        let statusItem = NSMenuItem(title: "Status: \(appState.status.rawValue)", action: nil, keyEquivalent: "")
+        statusItem.isEnabled = false
         menu.addItem(statusItem)
 
-        self.statusItem?.menu = menu
+        menu.addItem(NSMenuItem.separator())
+
+        // Add Settings button
+        let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Add Quit button
+        let quitItem = NSMenuItem(title: "Quit Voice2Text", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        statusItem?.menu = menu
+    }
+
+    @objc func openSettings() {
+        showSettings()
     }
 
     func startRecording() {
@@ -129,10 +137,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 pasteboard.setString(previous, forType: .string)
             }
         }
-    }
-
-    @objc func showAbout() {
-        NSApp.orderFrontStandardAboutPanel(nil)
     }
 
     func loadHistory() {
