@@ -54,13 +54,15 @@ class HistoryStorage {
 
         do {
             let query = transcripts.order(timestamp.desc)
-            for row in try db?.prepare(query) ?? [] {
-                let transcript = Transcript(
-                    text: row[text],
-                    service: row[service],
-                    language: row[language]
-                )
-                results.append(transcript)
+            if let rows = try db?.prepare(query) {
+                for row in rows {
+                    let transcript = Transcript(
+                        text: row[text],
+                        service: row[service],
+                        language: row[language]
+                    )
+                    results.append(transcript)
+                }
             }
         } catch {
             print("Load error: \(error)")
@@ -83,13 +85,15 @@ class HistoryStorage {
 
         do {
             let searchQuery = transcripts.filter(text.like("%\(searchText)%")).order(timestamp.desc)
-            for row in try db?.prepare(searchQuery) ?? [] {
-                let transcript = Transcript(
-                    text: row[text],
-                    service: row[service],
-                    language: row[language]
-                )
-                results.append(transcript)
+            if let rows = try db?.prepare(searchQuery) {
+                for row in rows {
+                    let transcript = Transcript(
+                        text: row[text],
+                        service: row[service],
+                        language: row[language]
+                    )
+                    results.append(transcript)
+                }
             }
         } catch {
             print("Search error: \(error)")

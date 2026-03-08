@@ -17,16 +17,34 @@ class HotKeyManager: ObservableObject {
     func setup(key: Key = .v, modifiers: NSEvent.ModifierFlags = .option) {
         hotKey = HotKey(key: key, modifiers: modifiers)
 
-        hotKey?.keyDownHandler = { [weak self] in
+        // Use flagsChanged to detect when Option key is pressed and released
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
             guard let self = self else { return }
-            self.isKeyDown = true
-            self.onHotKeyDown?()
+            let optionPressed = event.modifierFlags.contains(.option)
+
+            if optionPressed && !self.isKeyDown {
+                // Option key just pressed
+                self.isKeyDown = true
+                self.onHotKeyDown?()
+            } else if !optionPressed && self.isKeyDown {
+                // Option key just released
+                self.isKeyDown = false
+                self.onHotKeyUp?()
+            }
         }
 
-        hotKey?.keyUpHandler = { [weak self] in
-            guard let self = self else { return }
-            self.isKeyDown = false
-            self.onHotKeyUp?()
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            guard let self = self else { return event }
+            let optionPressed = event.modifierFlags.contains(.option)
+
+            if optionPressed && !self.isKeyDown {
+                self.isKeyDown = true
+                self.onHotKeyDown?()
+            } else if !optionPressed && self.isKeyDown {
+                self.isKeyDown = false
+                self.onHotKeyUp?()
+            }
+            return event
         }
 
         isEnabled = true
