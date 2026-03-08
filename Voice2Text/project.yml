@@ -23,7 +23,10 @@ targets:
     type: application
     platform: macOS
     sources:
-      - Voice2Text
+      - path: Voice2Text
+        excludes:
+          - "*.entitlements"
+      - path: Voice2Text/Voice2Text.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voice2text.app
