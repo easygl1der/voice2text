@@ -25,48 +25,69 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "mic.fill", accessibilityDescription: "Voice2Text")
-            button.action = #selector(toggleMenu)
-            button.target = self
         }
+
+        // Create menu
+        setupMenu()
 
         // Setup hotkey
         hotKeyManager.onHotKeyDown = { [weak self] in
+            print("HotKey DOWN detected!")
             self?.startRecording()
+            self?.refreshMenu()
         }
         hotKeyManager.onHotKeyUp = { [weak self] in
+            print("HotKey UP detected!")
             self?.stopRecordingAndTranscribe()
+            self?.refreshMenu()
         }
         hotKeyManager.setup()
 
-        updateMenu()
         loadHistory()
     }
 
-    @objc func toggleMenu() {
-        statusItem?.button?.performClick(nil)
-    }
-
-    func updateMenu() {
+    func setupMenu() {
         let menu = NSMenu()
 
-        let statusItem = NSMenuItem()
-        let statusView = MenuBarView(appState: appState, onRecord: { [weak self] in
-            self?.startRecording()
-        }, onStop: { [weak self] in
-            self?.stopRecordingAndTranscribe()
-        }, onSettings: { [weak self] in
-            self?.showSettings()
-        })
-        statusItem.view = NSHostingView(rootView: statusView)
-        menu.addItem(statusItem)
+        // Add status at top
+        let statusMenuItem = NSMenuItem(title: "Status: \(appState.status.rawValue)", action: nil, keyEquivalent: "")
+        statusMenuItem.isEnabled = false
+        menu.addItem(statusMenuItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Add Settings button
+        let settingsItem = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Add Quit button
+        let quitItem = NSMenuItem(title: "Quit Voice2Text", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
 
         self.statusItem?.menu = menu
     }
 
+    func refreshMenu() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.setupMenu()
+        }
+    }
+
+    @objc func openSettings() {
+        showSettings()
+    }
+
     func startRecording() {
+        print("startRecording called!")
         guard !appState.audioRecorder.isRecording else { return }
         appState.status = .recording
-        _ = appState.audioRecorder.startRecording()
+        let started = appState.audioRecorder.startRecording()
+        print("Recording started: \(started)")
     }
 
     func stopRecordingAndTranscribe() {
@@ -129,10 +150,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 pasteboard.setString(previous, forType: .string)
             }
         }
-    }
-
-    @objc func showAbout() {
-        NSApp.orderFrontStandardAboutPanel(nil)
     }
 
     func loadHistory() {
